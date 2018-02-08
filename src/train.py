@@ -7,6 +7,8 @@
 import os
 import json
 import math
+from zipfile import ZipFile
+from zipfile import ZIP_DEFLATED
 
 # train takes a given set of documents and a document
 # class and outputs a json file representing a model
@@ -78,8 +80,12 @@ def train_models():
 	model["total_vocabulary_size"] = total_vocabulary_size
 	model["total_document_count"] = total_document_count
 
-	# write model to file
+	# # write model to file
 	with open("model.json", "w") as f:
 		json.dump(model, f)
+
+	# write model to compressed file
+	# with ZipFile("model.zip", "w") as zf:
+	# 	zf.writestr("model.json", json.dumps(model), ZIP_DEFLATED)
 
 train_models()

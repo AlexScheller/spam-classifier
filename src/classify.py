@@ -1,18 +1,16 @@
 import json
 import math
+from zipfile import ZipFile
 
 # loads the count models from file, and returns an dictionary
 # representation with necessary probabilities calculated in
 # log space
-def load_models(model_file):
+def load_models(json_model):
+
+	# print(json.dumps(json_model))
 
 	ret_model = {}
 	ret_model["class_models"] = []
-
-	json_model = {}
-
-	with open(model_file, "r") as mf:
-		json_model = json.load(mf)
 
 	# total_word_count = json_model["total_word_count"]
 	total_vocabulary_size = json_model["total_vocabulary_size"]
@@ -28,10 +26,12 @@ def load_models(model_file):
 		new_class["word_cond_probs"] = {}
 		for word, count in doc_class["word_counts"].items():
 			# Laplace smoothing included
-			floating_prob = (count + 1) / (doc_class["total_word_count"] + total_vocabulary_size) 
+			floating_prob = (count + 1) / (doc_class["total_word_count"] + total_vocabulary_size)
+			# print(floating_prob)
 			new_class["word_cond_probs"][word] = math.log(floating_prob)
 
 		ret_model["class_models"].append(new_class)
+		# print(json.dumps(new_class))
 
 	return ret_model
 
@@ -39,7 +39,7 @@ def load_models(model_file):
 # accepts a document in the form of a list of words and a
 # model to test against
 def classify(document, model):
-	highest_prob = 0
+	highest_prob = None
 	prob_class = ""
 	for doc_class in model["class_models"]:
 		prior_prob = doc_class["class_prior_prob"]
@@ -51,14 +51,26 @@ def classify(document, model):
 			if word in doc_class["word_cond_probs"]:
 				running_word_prob += doc_class["word_cond_probs"][word]
 		total_prob = prior_prob + running_word_prob
-		if total_prob >= highest_prob:
+		# print(total_prob)
+		if highest_prob is None or total_prob >= highest_prob:
 			highest_prob = total_prob
 			prob_class = doc_class["class"]
 	yield prob_class
 	yield highest_prob
 
 def main():
-	model = load_models("model.json")
+
+	json_model = {}
+
+	# with ZipFile("model.zip") as zf:
+	# 	with zf.open("model.json") as mf:
+	# 		# print(json.loads(mf.read()))
+	# 		json_model = json.load(mf)
+
+	with open("model.json", "r") as mf:
+		json_model = json.load(mf)
+
+	model = load_models(json_model)
 	# example document
 	# doc_file = "testdoc.txt"
 	doc_file = "../data/nonspam-test/3-391msg1.txt"
