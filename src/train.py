@@ -40,7 +40,8 @@ def train_class(class_documents, document_class):
 	# 	json.dump(json_output, f)
 	return class_model
 
-def train():
+# TODO save as zip file for compression
+def train_models():
 	# takes a path name to load documents from and returns
 	# a list of documents in the form of a list of words
 	def load_document_lists(training_path):
@@ -54,7 +55,11 @@ def train():
 					ret.append(document_file.readline().split())
 		return ret					
 
-	doc_classes = ["spam", "nonspam"]
+	# currently hard coded, but could easily be swapped
+	# for other models
+	doc_classes = ["../data/spam", "../data/nonspam"]
+	# doc_classes = ["spam", "nonspam"]
+	
 	total_word_count = 0
 	total_vocabulary_size = 0
 	total_document_count = 0
@@ -77,4 +82,4 @@ def train():
 	with open("model.json", "w") as f:
 		json.dump(model, f)
 
-train()
+train_models()
