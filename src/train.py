@@ -4,7 +4,6 @@
 # NOTES: all probabilities are done in log space to prevent
 # underflow and for speed of calculation.
 
-
 import os
 import json
 import math
@@ -12,34 +11,40 @@ import math
 # train takes a given set of documents and a document
 # class and outputs a json file representing a model
 # for that class.
-def train_class(class_documents, document_class, all_document_count):
-	# accepts a list of words and a model to update
-	def append_document(document, model):
+def train_class(class_documents, document_class):
+	# accepts a list of words and a word count map to update
+	def append_document(document, counts):
 		for word in document:
-			if word in model:
-				model[word] += 1
+			if word in counts:
+				counts[word] += 1
 			else:
-				model[word] = 1
+				counts[word] = 1
 
-	model = {}
+	counts = {}
 	for doc in class_documents:
-		append_document(doc, model)
+		append_document(doc, counts)
 
-	json_output = {
+	total_word_count = 0
+	for word in counts:
+		total_word_count += counts[word]
+
+	class_model = {
 		"class" : document_class,
 		"class_document_count" : len(class_documents),
-		"all_document_count" : all_document_count,
-		"model" : model
+		"total_word_count" : total_word_count,
+		"word_counts" : counts
 	}
 
-	with open(document_class + "-model.json", "w") as f:
-		json.dump(json_output, f)
+	# # write the model to a file
+	# with open(document_class + "-model.json", "w") as f:
+	# 	json.dump(json_output, f)
+	return class_model
 
 def train():
 	# takes a path name to load documents from and returns
 	# a list of documents in the form of a list of words
 	def load_document_lists(training_path):
-		absolute_path = os.getcwd() + "/" + training_path
+		absolute_path = os.getcwd() + "/" + training_path + "-train"
 		ret = []
 		for entry in os.scandir(absolute_path):
 			if entry.is_file():
@@ -49,8 +54,27 @@ def train():
 					ret.append(document_file.readline().split())
 		return ret					
 
-	class_documents = load_document_lists("dummy")
+	doc_classes = ["spam", "nonspam"]
+	total_word_count = 0
+	total_vocabulary_size = 0
+	total_document_count = 0
+	model = {}
+	model["models"] = []
 
-	train_class(class_documents, "test", len(class_documents))
+	for doc_class in doc_classes:
+		class_docs = load_document_lists(doc_class)
+		class_model = train_class(class_docs, doc_class)
+		total_word_count += class_model["total_word_count"]
+		total_vocabulary_size += len(class_model["word_counts"])
+		total_document_count += class_model["class_document_count"]
+		model["models"].append(train_class(class_docs, doc_class))
+
+	model["total_word_count"] = total_word_count
+	model["total_vocabulary_size"] = total_vocabulary_size
+	model["total_document_count"] = total_document_count
+
+	# write model to file
+	with open("model.json", "w") as f:
+		json.dump(model, f)
 
 train()
