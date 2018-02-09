@@ -7,6 +7,7 @@
 import os
 import json
 import math
+from collections import Counter
 from zipfile import ZipFile
 from zipfile import ZIP_DEFLATED
 
@@ -36,6 +37,11 @@ def train_class(class_documents, document_class):
 		"total_word_count" : total_word_count,
 		"word_counts" : counts
 	}
+
+	print("top 5 counts for class: " + document_class)
+	common = Counter(class_model["word_counts"])
+	for key, value in common.most_common(5):
+		print("{}: {}".format(key, value))
 
 	# # write the model to a file
 	# with open(document_class + "-model.json", "w") as f:
@@ -74,7 +80,8 @@ def train_models():
 		total_word_count += class_model["total_word_count"]
 		total_vocabulary_size += len(class_model["word_counts"])
 		total_document_count += class_model["class_document_count"]
-		model["models"].append(train_class(class_docs, doc_class))
+		model["models"].append(class_model)
+		# model["models"].append(train_class(class_docs, doc_class))
 
 	model["total_word_count"] = total_word_count
 	model["total_vocabulary_size"] = total_vocabulary_size
