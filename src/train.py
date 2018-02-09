@@ -61,7 +61,7 @@ def train_models():
 	# for other models
 	doc_classes = ["../data/spam", "../data/nonspam"]
 	# doc_classes = ["spam", "nonspam"]
-	
+
 	total_word_count = 0
 	total_vocabulary_size = 0
 	total_document_count = 0
