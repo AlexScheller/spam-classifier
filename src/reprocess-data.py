@@ -25,5 +25,18 @@ def process_file(file_name):
 
 def process_files():
 
+	spam_train = "../data/spam-train/"
+	spam_test = "../data/spam-test/"
+	nonspam_train = "../data/nonspam-train/"
+	nonspam_test = "../data/nonspam-test/"
 
-process_file("test-process.txt")
+	paths = [spam_train, spam_test, nonspam_train, nonspam_test]
+
+	for path in paths:
+		abs_path = os.path.abspath(path)
+		for entry in os.scandir(abs_path):
+			if entry.is_file():
+				process_file(entry.path)
+
+# process_file("test-process.txt")
+process_files()
