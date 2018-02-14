@@ -27,21 +27,43 @@ def train_class(class_documents, document_class):
 	for doc in class_documents:
 		append_document(doc, counts)
 
+	# total_word_count = 0
+	# for word in counts:
+	# 	total_word_count += counts[word]
+
+	trimmed = {}
+	common = Counter(counts)
+	# print("top 5 counts for class: " + document_class)
+	# for key, value in common.most_common(5):
+	# 	print("{}: {}".format(key, value))
+	val = 1000
+	print(val)
+	for key, value in common.most_common(val):
+		trimmed[key] = value
+
 	total_word_count = 0
-	for word in counts:
-		total_word_count += counts[word]
+	for word in trimmed:
+		total_word_count += trimmed[word]
 
 	class_model = {
 		"class" : document_class,
 		"class_document_count" : len(class_documents),
 		"total_word_count" : total_word_count,
-		"word_counts" : counts
+		"word_counts" : trimmed
 	}
 
-	print("top 5 counts for class: " + document_class)
-	common = Counter(class_model["word_counts"])
-	for key, value in common.most_common(5):
-		print("{}: {}".format(key, value))
+	# print("top 5 counts for class: " + document_class)
+	# common = Counter(class_model["word_counts"])
+	# trimmed = {}
+	# for key, value in common.most_common(5):
+	# 	print("{}: {}".format(key, value))
+	# for key, value in common.most_common(2400):
+	# 	trimmed[key] = value
+	# class_model["word_counts"] = trimmed
+
+	# total_word_count = 0
+	# for word in class_model["word_counts"]:
+	# 	total_word_count += 
 
 	# # write the model to a file
 	# with open(document_class + "-model.json", "w") as f:
