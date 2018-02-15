@@ -4,17 +4,18 @@
 # NOTES: all probabilities are done in log space to prevent
 # underflow and for speed of calculation.
 
+import sys
 import os
 import json
 import math
 from collections import Counter
-from zipfile import ZipFile
-from zipfile import ZIP_DEFLATED
+# from zipfile import ZipFile
+# from zipfile import ZIP_DEFLATED
 
 # train takes a given set of documents and a document
 # class and outputs a json file representing a model
 # for that class.
-def train_class(class_documents, document_class):
+def train_class(class_documents, document_class, vocabulary_limit):
 	# accepts a list of words and a word count map to update
 	def append_document(document, counts):
 		for word in document:
@@ -36,9 +37,23 @@ def train_class(class_documents, document_class):
 	# print("top 5 counts for class: " + document_class)
 	# for key, value in common.most_common(5):
 	# 	print("{}: {}".format(key, value))
-	val = 1000
-	print(val)
-	for key, value in common.most_common(val):
+
+	# TODO: better explanation for this maybe with value
+	# changes and how this relates to the actual formula
+	# used to calculate a given document's probability
+	# when classifying
+	
+	# the vocabulary is trimmed to the top 1000 words for
+	# each class. If a class has a large amount of low
+	# count words, it may display low probabilities when
+	# classifying, even if it has a similar amount of similar
+	# count words to the other classes.
+
+	# NOTE: this step leads to slight differences in between
+	# model trainings. some words will have the same count, and
+	# order is not necessarily preserved between runs. Anecdotally
+	# I've only observed accuracy differences of (< 1%).
+	for key, value in common.most_common(vocabulary_limit):
 		trimmed[key] = value
 
 	total_word_count = 0
@@ -71,7 +86,7 @@ def train_class(class_documents, document_class):
 	return class_model
 
 # TODO save as zip file for compression
-def train_models():
+def train_models(model_name="model", vocabulary_limit=1000):
 	# takes a path name to load documents from and returns
 	# a list of documents in the form of a list of words
 	def load_document_lists(training_path):
@@ -98,7 +113,7 @@ def train_models():
 
 	for doc_class in doc_classes:
 		class_docs = load_document_lists(doc_class)
-		class_model = train_class(class_docs, doc_class)
+		class_model = train_class(class_docs, doc_class, vocabulary_limit)
 		total_word_count += class_model["total_word_count"]
 		total_vocabulary_size += len(class_model["word_counts"])
 		total_document_count += class_model["class_document_count"]
@@ -109,12 +124,33 @@ def train_models():
 	model["total_vocabulary_size"] = total_vocabulary_size
 	model["total_document_count"] = total_document_count
 
+	meta = {
+		"file_name": model_name,
+		"vacabulary_limit": vocabulary_limit
+	}
+	model["meta"] = meta
+
 	# # write model to file
-	with open("model.json", "w") as f:
+	# with open("model.json", "w") as f:
+	with open(model_name + ".json", "w") as f:
 		json.dump(model, f)
 
 	# write model to compressed file
 	# with ZipFile("model.zip", "w") as zf:
 	# 	zf.writestr("model.json", json.dumps(model), ZIP_DEFLATED)
 
-train_models()
+# train_models()
+
+def main(args):
+	# TODO: integrate argparse instead of this junk
+	if (len(args) > 0):
+		model_name = args[0]
+		if len(args == 1):
+			train_models(model_name)
+		else:
+			vacabulary_limit = int(args[1])
+			train_models(model_name, vocabulary_limit)
+	else:
+		train_models()
+
+main(sys.argv[1:])
