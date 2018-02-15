@@ -9,13 +9,15 @@ import os
 import json
 import math
 from collections import Counter
-# from zipfile import ZipFile
-# from zipfile import ZIP_DEFLATED
 
 # train takes a given set of documents and a document
 # class and outputs a json file representing a model
-# for that class.
+# for that class. A vocabulary limit is provided to
+# prevent the build up of many words with small counts,
+# which can negatively impact classification accuracy as
+# explained below.
 def train_class(class_documents, document_class, vocabulary_limit):
+	
 	# accepts a list of words and a word count map to update
 	def append_document(document, counts):
 		for word in document:
@@ -28,29 +30,33 @@ def train_class(class_documents, document_class, vocabulary_limit):
 	for doc in class_documents:
 		append_document(doc, counts)
 
-	# total_word_count = 0
-	# for word in counts:
-	# 	total_word_count += counts[word]
-
 	trimmed = {}
 	common = Counter(counts)
+
 	# print("top 5 counts for class: " + document_class)
 	# for key, value in common.most_common(5):
 	# 	print("{}: {}".format(key, value))
-
-	# TODO: better explanation for this maybe with value
-	# changes and how this relates to the actual formula
-	# used to calculate a given document's probability
-	# when classifying
 	
-	# the vocabulary is trimmed to the top 1000 words for
-	# each class. If a class has a large amount of low
-	# count words, it may display low probabilities when
-	# classifying, even if it has a similar amount of similar
-	# count words to the other classes.
+	# the vocabulary is trimmed to a certain number of words for
+	# each class. This is to prevent issues stemming from how
+	# p(w | c) is calculated. the function is: 
+
+	#                (count of w in c) + 1
+	# p(w | c) = -----------------------------
+	#            (total word count of c) + |V|
+	#
+	# where |V| is the shared vocabulary size of all classes.
+	# see formula (6.14) in "6.pdf" in the background folder for
+	# an explanation of the (+ 1) and (+ |V|)
+
+	# If a given class has a very large vocabulary, the denominator
+	# will necessarily be large, additionally, if a word has a very
+	# low count, the numerator will be correspondingly small. Both
+	# cases lead lower probabilities. All this boils down essentially
+	# to evening the playing field a bit for the document classes.
 
 	# NOTE: this step leads to slight differences in between
-	# model trainings. some words will have the same count, and
+	# model trainings. Some words will have the equal counts, and
 	# order is not necessarily preserved between runs. Anecdotally
 	# I've only observed accuracy differences of (< 1%).
 	for key, value in common.most_common(vocabulary_limit):
@@ -67,25 +73,8 @@ def train_class(class_documents, document_class, vocabulary_limit):
 		"word_counts" : trimmed
 	}
 
-	# print("top 5 counts for class: " + document_class)
-	# common = Counter(class_model["word_counts"])
-	# trimmed = {}
-	# for key, value in common.most_common(5):
-	# 	print("{}: {}".format(key, value))
-	# for key, value in common.most_common(2400):
-	# 	trimmed[key] = value
-	# class_model["word_counts"] = trimmed
-
-	# total_word_count = 0
-	# for word in class_model["word_counts"]:
-	# 	total_word_count += 
-
-	# # write the model to a file
-	# with open(document_class + "-model.json", "w") as f:
-	# 	json.dump(json_output, f)
 	return class_model
 
-# TODO save as zip file for compression
 def train_models(model_name="model", vocabulary_limit=1000):
 	# takes a path name to load documents from and returns
 	# a list of documents in the form of a list of words
