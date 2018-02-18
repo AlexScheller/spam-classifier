@@ -75,6 +75,8 @@ def train_class(class_documents, document_class, vocabulary_limit):
 
 	return class_model
 
+# train_models is the main training driver. It iterates over
+# the classes, training a model for each.
 def train_models(model_name="model", vocabulary_limit=1000):
 	# takes a path name to load documents from and returns
 	# a list of documents in the form of a list of words

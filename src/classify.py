@@ -83,56 +83,41 @@ def classify(document, model):
 			highest_prob = total_prob
 			prob_class = doc_class["class"]
 	# print("")
-	yield prob_class
-	yield highest_prob
+	return prob_class
+	# yield prob_class
+	# yield highest_prob
 
 # hard coded for testing purposes
 def test_model(model):
-	
-	num_spam_docs = 0
-	num_total_docs = 0
-	spam_test_path = os.getcwd() + "/../data/spam-test"
 
-	for entry in os.scandir(spam_test_path):
-		if entry.is_file():
-			with open(entry.path, "r") as doc_file:
-				num_total_docs += 1
-				doc = doc_file.readline().split()
-				doc_class, doc_prob = classify(doc, model)
-				if doc_class == "../data/spam":
-					num_spam_docs += 1
+	def test_class(doc_class, test_docs):
+		docs_correctly_classified = 0
+		total_docs = len(test_docs)
+		for doc in test_docs:
+			if classify(doc, model) == doc_class:
+				docs_correctly_classified += 1
+		result_string = "{} / {} or {:.2f}%".format(
+						docs_correctly_classified,
+						total_docs,
+						(docs_correctly_classified / total_docs) * 100)
+		return "Accuracy for " + doc_class + ": " + result_string
 
-	nsd = num_spam_docs
-	ntd = num_total_docs
-	result_string = "{} / {} or {:.2f}%".format(nsd, ntd, (nsd / ntd) * 100)
-	print("total docs correctly identified as spam: " + result_string)
+	def load_test_docs(path):
+		ret = []
+		for entry in os.scandir(path):
+			if entry.is_file():
+				with open(entry.path, "r") as doc_file:
+					ret.append(doc_file.readline().split())
+		return ret
 
-	num_nonspam_docs = 0
-	num_total_docs = 0
-	nonspam_test_path = os.getcwd() + "/../data/nonspam-test"
-
-	for entry in os.scandir(nonspam_test_path):
-		if entry.is_file():
-			with open(entry.path, "r") as doc_file:
-				num_total_docs += 1
-				doc = doc_file.readline().split()
-				doc_class, doc_prob = classify(doc, model)
-				if doc_class == "../data/nonspam":
-					num_nonspam_docs += 1
-
-	nnsd = num_nonspam_docs
-	ntd = num_total_docs
-	result_string = "{} / {} or {:.2f}%".format(nnsd, ntd, (nnsd / ntd) * 100)
-	print("total docs correctly identified as non-spam: " + result_string)
+	for document_class in model["class_models"]:
+		test_path = os.path.abspath(document_class["class"]) + "-test/"
+		result = test_class(document_class["class"], load_test_docs(test_path))
+		print(result)
 
 def main():
 
 	json_model = {}
-
-	# with ZipFile("model.zip") as zf:
-	# 	with zf.open("model.json") as mf:
-	# 		# print(json.loads(mf.read()))
-	# 		json_model = json.load(mf)
 
 	with open("model.json", "r") as mf:
 		json_model = json.load(mf)
@@ -140,14 +125,5 @@ def main():
 	model = load_models(json_model)
 
 	test_model(model)
-	# example document
-	# doc_file = "testdoc.txt"
-	# doc_file = "../data/nonspam-test/3-391msg1.txt"
-	# doc_file = "../data/spam-test/spmsga138.txt"
-	# doc_file = "test.txt"
-	# with open(doc_file, "r") as f:
-	# 	doc = f.readline().split()
-	# 	doc_class, prob = classify(doc, model)
-	# 	print("likely class for {}: {} with (log) prob {}".format(doc_file, doc_class, prob))
 
 main()
