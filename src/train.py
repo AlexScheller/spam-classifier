@@ -10,7 +10,7 @@ import json
 import math
 from collections import Counter
 
-# train takes a given set of documents and a document
+# train_class takes a given set of documents and a document
 # class and outputs a json file representing a model
 # for that class. A vocabulary limit is provided to
 # prevent the build up of many words with small counts,
@@ -52,11 +52,12 @@ def train_class(class_documents, document_class, vocabulary_limit):
 	# If a given class has a very large vocabulary, the denominator
 	# will necessarily be large, additionally, if a word has a very
 	# low count, the numerator will be correspondingly small. Both
-	# cases lead lower probabilities. All this boils down essentially
-	# to evening the playing field a bit for the document classes.
+	# cases lead lower probabilities. Limiting the vocabulary count
+	# essentially boils down to evening the playing field a bit for
+	# the document classes.
 
 	# NOTE: this step leads to slight differences in between
-	# model trainings. Some words will have the equal counts, and
+	# model trainings since some words will have the equal counts, and
 	# order is not necessarily preserved between runs. Anecdotally
 	# I've only observed accuracy differences of (< 1%).
 	for key, value in common.most_common(vocabulary_limit):
@@ -77,13 +78,15 @@ def train_class(class_documents, document_class, vocabulary_limit):
 
 # train_models is the main training driver. It iterates over
 # the classes, training a model for each.
-def train_models(model_name="model", vocabulary_limit=1000):
+def train_models(training_path="../data/training/",
+				 model_name="model", 
+				 vocabulary_limit=1000):
+
 	# takes a path name to load documents from and returns
 	# a list of documents in the form of a list of words
 	def load_document_lists(training_path):
-		absolute_path = os.getcwd() + "/" + training_path + "-train"
 		ret = []
-		for entry in os.scandir(absolute_path):
+		for entry in os.scandir(training_path):
 			if entry.is_file():
 				with open(entry.path, "r") as document_file:
 					# all input files are only one line and
@@ -91,25 +94,21 @@ def train_models(model_name="model", vocabulary_limit=1000):
 					ret.append(document_file.readline().split())
 		return ret					
 
-	# currently hard coded, but could easily be swapped
-	# for other models
-	doc_classes = ["../data/spam", "../data/nonspam"]
-	# doc_classes = ["spam", "nonspam"]
-
 	total_word_count = 0
 	total_vocabulary_size = 0
 	total_document_count = 0
 	model = {}
 	model["models"] = []
 
-	for doc_class in doc_classes:
-		class_docs = load_document_lists(doc_class)
-		class_model = train_class(class_docs, doc_class, vocabulary_limit)
-		total_word_count += class_model["total_word_count"]
-		total_vocabulary_size += len(class_model["word_counts"])
-		total_document_count += class_model["class_document_count"]
-		model["models"].append(class_model)
-		# model["models"].append(train_class(class_docs, doc_class))
+	abs_training_path = os.path.abspath(training_path)
+	for doc_class in os.scandir(abs_training_path):
+		if doc_class.is_dir():
+			class_docs = load_document_lists(doc_class.path)
+			class_model = train_class(class_docs, doc_class.name, vocabulary_limit)
+			total_word_count += class_model["total_word_count"]
+			total_vocabulary_size += len(class_model["word_counts"])
+			total_document_count += class_model["class_document_count"]
+			model["models"].append(class_model)
 
 	model["total_word_count"] = total_word_count
 	model["total_vocabulary_size"] = total_vocabulary_size
@@ -122,15 +121,8 @@ def train_models(model_name="model", vocabulary_limit=1000):
 	model["meta"] = meta
 
 	# # write model to file
-	# with open("model.json", "w") as f:
 	with open(model_name + ".json", "w") as f:
 		json.dump(model, f)
-
-	# write model to compressed file
-	# with ZipFile("model.zip", "w") as zf:
-	# 	zf.writestr("model.json", json.dumps(model), ZIP_DEFLATED)
-
-# train_models()
 
 def main(args):
 	# TODO: integrate argparse instead of this junk

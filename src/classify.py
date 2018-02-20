@@ -1,7 +1,6 @@
 import os
 import json
 import math
-from zipfile import ZipFile
 
 # loads the count models from file, and returns an dictionary
 # representation with necessary probabilities calculated in
@@ -36,8 +35,8 @@ def load_models(json_model):
 
 	return ret_model
 
-# this method yields far better results than the below method
-# perhaps the trainer is wrong?
+# This method classifies with a simple word count model,
+# and is actually basically as accurate as the Baye's model.
 # def classify(document, model):
 # 	prob_class = ""
 # 	highest_ratio = 0
@@ -56,33 +55,29 @@ def load_models(json_model):
 # accepts a document in the form of a list of words and a
 # model to test against
 def classify(document, model):
-	# print(document)
+
 	highest_prob = None
 	prob_class = ""
 	for doc_class in model["class_models"]:
 		prior_prob = doc_class["class_prior_prob"]
-		# print("{}: {}".format(doc_class["class"], prior_prob))
 		running_word_prob = 0
 
-		# debugging
 		words_found = 0
 		for word in document:
-			# choose to ignore unseen words. They could
-			# also be represented by a artificial "unkown"
-			# token inserted into each model.
+			# Words unseen during training are simply ignored.
 			if word in doc_class["word_cond_probs"]:
 				words_found += 1
 				running_word_prob += doc_class["word_cond_probs"][word]
-		# print("testing class: {}".format(doc_class["class"]))
-		# print("words found: {}, total words: {} - {:.2f}%".format(words_found, len(document), (words_found / len(document)) * 100))
 		total_prob = prior_prob + running_word_prob
-		total_prob = -total_prob # cause of log prob
-		# print(json.dumps(doc_class))
-		# print(doc_class["class"] + " " + str(total_prob))
+		
+		# Since probability is being dealt with in log space,
+		# the numbers will be negative. Here they are flipped to
+		# positive. This is purely cosmetic, as the magnitudes of
+		# the probabilities don't actually change.
+		total_prob = -total_prob
 		if highest_prob is None or total_prob >= highest_prob:
 			highest_prob = total_prob
 			prob_class = doc_class["class"]
-	# print("")
 	return prob_class
 	# yield prob_class
 	# yield highest_prob
@@ -111,7 +106,7 @@ def test_model(model):
 		return ret
 
 	for document_class in model["class_models"]:
-		test_path = os.path.abspath(document_class["class"]) + "-test/"
+		test_path = os.path.abspath("../data/testing/" + document_class["class"])
 		result = test_class(document_class["class"], load_test_docs(test_path))
 		print(result)
 
