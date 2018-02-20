@@ -8,6 +8,7 @@ import sys
 import os
 import json
 import math
+import argparse
 from collections import Counter
 
 # train_class takes a given set of documents and a document
@@ -78,9 +79,7 @@ def train_class(class_documents, document_class, vocabulary_limit):
 
 # train_models is the main training driver. It iterates over
 # the classes, training a model for each.
-def train_models(training_path="../data/training/",
-				 model_name="model", 
-				 vocabulary_limit=1000):
+def train_models(training_path, model_name, vocabulary_limit):
 
 	# takes a path name to load documents from and returns
 	# a list of documents in the form of a list of words
@@ -124,16 +123,27 @@ def train_models(training_path="../data/training/",
 	with open(model_name + ".json", "w") as f:
 		json.dump(model, f)
 
-def main(args):
-	# TODO: integrate argparse instead of this junk
-	if (len(args) > 0):
-		model_name = args[0]
-		if len(args == 1):
-			train_models(model_name)
-		else:
-			vacabulary_limit = int(args[1])
-			train_models(model_name, vocabulary_limit)
-	else:
-		train_models()
+# Setup for a few command line parameters
+def parse_flags():
+	parser = argparse.ArgumentParser()
+	name_help_string = "Specifies the name of the outputted json model."
+	parser.add_argument("-m", "--model-name", type=str,
+						help=name_help_string, default="model")
+	path_help_string = ("Specifies the directory containing documents"
+						" to train with. Should be an absolute or relative"
+						" file path.")
+	parser.add_argument("-td", "--training-directory", type=str,
+						help=path_help_string, default="../data/training/")
+	vocab_help_string = ("Specifies the number limit of unique words in"
+						 " a given class's vocabulary.")
+	parser.add_argument("-vl", "--vocab-limit", type=int,
+						help=vocab_help_string, default=1000)
+	return parser.parse_args()
 
-main(sys.argv[1:])
+def main():
+	flags = parse_flags()
+	train_models(flags.training_directory,
+				flags.model_name,
+				flags.vocab_limit)
+
+main()
