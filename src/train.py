@@ -69,7 +69,7 @@ def train_class(class_documents, document_class, vocabulary_limit):
 		total_word_count += trimmed[word]
 
 	class_model = {
-		"class" : document_class,
+		"class_name" : document_class,
 		"class_document_count" : len(class_documents),
 		"total_word_count" : total_word_count,
 		"word_counts" : trimmed
@@ -120,7 +120,7 @@ def train_models(training_path, model_name, vocabulary_limit):
 	model["meta"] = meta
 
 	# # write model to file
-	with open(model_name + ".json", "w") as f:
+	with open("../data/" + model_name + ".json", "w") as f:
 		json.dump(model, f)
 
 # Setup for a few command line parameters

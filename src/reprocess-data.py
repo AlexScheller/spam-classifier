@@ -1,3 +1,5 @@
+# this script was used to join "e mail", and eliminate single characters
+# except for x
 import os
 
 def process_file(file_name):
