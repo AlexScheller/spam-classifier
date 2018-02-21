@@ -12,3 +12,4 @@ In order to remedy these issues the following steps have been taken: "e mail" ha
 
 ## results
 
+![results-shot](classify-results.png "results of testing the classifier")
